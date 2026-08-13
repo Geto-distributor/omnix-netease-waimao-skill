@@ -40,6 +40,7 @@ python3 scripts/waimao.py capabilities
 python3 scripts/waimao.py request POST '/api/NeteaseWaimao/v2/search/jobs' \
   --body search.json \
   --idempotency-key stable-key
+python3 -m unittest discover -s tests -v
 ~~~
 
 先阅读 [SKILL.md](SKILL.md)。实际 endpoint、method 和 DTO 始终以当前 OmniX OpenAPI 为准。

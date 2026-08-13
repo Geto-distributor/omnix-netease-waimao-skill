@@ -31,3 +31,5 @@ company/customs enrichment 的 body 只传 `public_result_ref` 和业务查询�
 ## 标识
 
 对外仅接受/返回不可猜测的 `public_job_ref` / `public_result_ref`。状态和结果必须使用创建它们的同一 OmniX principal 查询；另一用户访问时按不存在处理。任何名为 job_id、result_id、search_result_id 或缺少 public 语义的底层引用均不进入 Skill 合同。
+
+客户端会移除响应中意外出现的内部 job/result/RPA 字段并记录 warning。不存在或不属于当前 principal 的 public ref 按 404 处理，不探测其他身份或内部 ID。

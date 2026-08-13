@@ -26,7 +26,7 @@ python scripts/waimao.py request GET '/api/NeteaseWaimao/v2/search/jobs/public-j
 
 示例路径仅用于说明调用形态；实际大小写、path、参数与 DTO 必须来自本次 capabilities 返回的 OpenAPI。脚本拒绝 v1、admin、login、SMS、usage、raw/RPA 路径，也拒绝非 public 的 job/result path 参数。
 
-POST 必须有可重算的 `Idempotency-Key`。取消任务只在用户明确要求时使用 DELETE + `--confirm-cancel`。没有长阻塞 `wait`：一次调用只提交、查询一次状态或拉一页结果。
+POST 必须有可重算的 `Idempotency-Key`。脚本按 OpenAPI 校验 query、path public ref 和 JSON body，并拒绝 owner、tenant、内部 job/result/RPA ID。取消任务只在用户明确要求时使用 DELETE + `--confirm-cancel`。没有长阻塞 `wait`：一次调用只提交、查询一次状态或拉一页结果。
 
 ## 标准流程
 
@@ -52,7 +52,7 @@ POST 必须有可重算的 `Idempotency-Key`。取消任务只在用户明确要
 
 ### 3. 查询与结果
 
-用同一 Key 查询 public ref 的状态；完成后按 OpenAPI 分页取结果。若需要公司详情、联系人或海关补充，只能从当前 principal 可见的 public result ref 发起后续任务。
+用同一 Key 查询 public ref 的状态；完成后按 OpenAPI 分页取结果。保存 `queued|running|completed|failed|cancelled|provider_session_expired` 归一状态。若需要公司详情、联系人或海关补充，只能从当前 principal 可见的 public result ref 发起后续任务。
 
 不要把网页会话失效转化成 login/admin 操作；报告 `provider_session_expired` 交由服务端运维恢复。
 
