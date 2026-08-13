@@ -13,8 +13,6 @@ description: 使用本地 OMNIX_API_KEY 调用 OmniX 受保护的网易外贸通
 
 使用 `scripts/waimao.py`，先执行 `capabilities`。只调用当前 OpenAPI 中受保护的网易外贸通 v2 普通 Agent API；v2 未发布时状态为 `upstream_unavailable`，不得回退到 v1、共享内部 ID 或无鉴权接口。
 
-先读取 [contract-status.md](references/contract-status.md)。测试环境和对应服务端 PR 未就绪时，只执行静态合同与 Mock 测试；不得把候选路由写成已真实调用通过。集成只使用 Agent REST，MCP 不在设计、实现或测试范围。
-
 OmniX 服务端负责把当前 principal 绑定到 public refs。Skill 不传 owner，不接触共享网易账号的业务 Key/Admin Key，也不解释成每个用户拥有独立网易账号。
 
 ## 安全调用
@@ -89,6 +87,5 @@ public refs 仅用于后续查询和审计，不是 Company/Project/Source 自�
 
 - 不调用 login、SMS、admin、usage、raw RPA 或 v1 接口。
 - 不显示、写入或传递共享 RPA 内部 job/result ID。
-- 不使用或探测 MCP。
 - 不自行轮询到完成，不无限翻页。
 - 不把 Provider 结果直接发布、评分或自动建立关系。

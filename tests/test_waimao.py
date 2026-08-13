@@ -64,6 +64,17 @@ def args(method: str, path: str, body: str | None = None, **overrides):
 
 
 class OpenApiSafetyTests(unittest.TestCase):
+    def test_runtime_docs_do_not_embed_release_history(self) -> None:
+        forbidden = (
+            "未合并 PR", "测试环境尚未", "当前服务端 main", "MCP", "ETag", "If-Match",
+        )
+        documents = [ROOT / "SKILL.md", *sorted((ROOT / "references").glob("*.md"))]
+        for document in documents:
+            text = document.read_text(encoding="utf-8")
+            for phrase in forbidden:
+                with self.subTest(document=document.name, phrase=phrase):
+                    self.assertNotIn(phrase, text)
+
     def test_internal_job_placeholder_and_admin_are_excluded(self) -> None:
         paths = {(item["method"], item["path"]) for item in CLIENT.operations(SPEC)}
         self.assertFalse(any("{jobId}" in path for _, path in paths))

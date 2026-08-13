@@ -2,8 +2,6 @@
 
 OpenAPI 是 endpoint、method、query、request/response schema 和 operation availability 的唯一权威来源。客户端只接受路径中明确包含 NeteaseWaimao v2 的普通 Agent API。
 
-下面路由族属于候选设计说明。测试环境未上线且服务端 PR 未合并时，只能用 Mock 验证，不得称为当前 main 已发布接口。
-
 ## 能力类型
 
 - 企业全局搜索。
@@ -34,4 +32,4 @@ company/customs enrichment 的 body 只传 `public_result_ref` 和业务查询�
 
 对外仅接受/返回不可猜测的 `public_job_ref` / `public_result_ref`。状态和结果必须使用创建它们的同一 OmniX principal 查询；另一用户访问时按不存在处理。任何名为 job_id、result_id、search_result_id 或缺少 public 语义的底层引用均不进入 Skill 合同。
 
-客户端会移除响应中意外出现的内部 job/result/RPA 字段并记录 warning，但这不能替代服务端合同测试；跨 Key owner 隔离在测试环境可用前保持 blocked。
+客户端会移除响应中意外出现的内部 job/result/RPA 字段并记录 warning。不存在或不属于当前 principal 的 public ref 按 404 处理，不探测其他身份或内部 ID。
