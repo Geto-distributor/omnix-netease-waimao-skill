@@ -13,6 +13,8 @@
 
 本仓库不包含登录、短信、管理员、用量、v1、原始 RPA 接口，也不包含共享 RPA 凭据或内部任务 ID。
 
+集成只使用 Agent REST，不包含 MCP。当前测试环境和候选服务端 PR 状态见 [合同成熟度](references/contract-status.md)；环境就绪前不声称真实 Provider 调用或跨 Key 隔离测试已通过。
+
 ## 安装
 
 ~~~bash
@@ -40,6 +42,7 @@ python3 scripts/waimao.py capabilities
 python3 scripts/waimao.py request POST '/api/NeteaseWaimao/v2/search/jobs' \
   --body search.json \
   --idempotency-key stable-key
+python3 -m unittest discover -s tests -v
 ~~~
 
 先阅读 [SKILL.md](SKILL.md)。实际 endpoint、method 和 DTO 始终以当前 OmniX OpenAPI 为准。

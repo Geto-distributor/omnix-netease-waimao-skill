@@ -13,6 +13,8 @@ description: 使用本地 OMNIX_API_KEY 调用 OmniX 受保护的网易外贸通
 
 使用 `scripts/waimao.py`，先执行 `capabilities`。只调用当前 OpenAPI 中受保护的网易外贸通 v2 普通 Agent API；v2 未发布时状态为 `upstream_unavailable`，不得回退到 v1、共享内部 ID 或无鉴权接口。
 
+先读取 [contract-status.md](references/contract-status.md)。测试环境和对应服务端 PR 未就绪时，只执行静态合同与 Mock 测试；不得把候选路由写成已真实调用通过。集成只使用 Agent REST，MCP 不在设计、实现或测试范围。
+
 OmniX 服务端负责把当前 principal 绑定到 public refs。Skill 不传 owner，不接触共享网易账号的业务 Key/Admin Key，也不解释成每个用户拥有独立网易账号。
 
 ## 安全调用
@@ -26,7 +28,7 @@ python scripts/waimao.py request GET '/api/NeteaseWaimao/v2/search/jobs/public-j
 
 示例路径仅用于说明调用形态；实际大小写、path、参数与 DTO 必须来自本次 capabilities 返回的 OpenAPI。脚本拒绝 v1、admin、login、SMS、usage、raw/RPA 路径，也拒绝非 public 的 job/result path 参数。
 
-POST 必须有可重算的 `Idempotency-Key`。取消任务只在用户明确要求时使用 DELETE + `--confirm-cancel`。没有长阻塞 `wait`：一次调用只提交、查询一次状态或拉一页结果。
+POST 必须有可重算的 `Idempotency-Key`。脚本按 OpenAPI 校验 query、path public ref 和 JSON body，并拒绝 owner、tenant、内部 job/result/RPA ID。取消任务只在用户明确要求时使用 DELETE + `--confirm-cancel`。没有长阻塞 `wait`：一次调用只提交、查询一次状态或拉一页结果。
 
 ## 标准流程
 
@@ -52,7 +54,7 @@ POST 必须有可重算的 `Idempotency-Key`。取消任务只在用户明确要
 
 ### 3. 查询与结果
 
-用同一 Key 查询 public ref 的状态；完成后按 OpenAPI 分页取结果。若需要公司详情、联系人或海关补充，只能从当前 principal 可见的 public result ref 发起后续任务。
+用同一 Key 查询 public ref 的状态；完成后按 OpenAPI 分页取结果。保存 `queued|running|completed|failed|cancelled|provider_session_expired` 归一状态。若需要公司详情、联系人或海关补充，只能从当前 principal 可见的 public result ref 发起后续任务。
 
 不要把网页会话失效转化成 login/admin 操作；报告 `provider_session_expired` 交由服务端运维恢复。
 
@@ -87,5 +89,6 @@ public refs 仅用于后续查询和审计，不是 Company/Project/Source 自�
 
 - 不调用 login、SMS、admin、usage、raw RPA 或 v1 接口。
 - 不显示、写入或传递共享 RPA 内部 job/result ID。
+- 不使用或探测 MCP。
 - 不自行轮询到完成，不无限翻页。
 - 不把 Provider 结果直接发布、评分或自动建立关系。
