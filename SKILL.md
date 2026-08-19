@@ -11,7 +11,7 @@ description: 使用本地 OMNIX_API_KEY 调用 OmniX 受保护的网易外贸通
 - `OMNIX_API_KEY`：当前用户的 `omx_test_*` 或 `omx_live_*` Key。
 - 可选 `OMNIX_OPENAPI_URL`：默认 `${OMNIX_API_BASE_URL}/swagger/v1/swagger.json`。
 
-使用 `scripts/waimao.py`，先执行 `capabilities`。只调用当前 OpenAPI 中受保护的网易外贸通 v2 普通 Agent API；v2 未发布时状态为 `upstream_unavailable`，不得回退到 v1、共享内部 ID 或无鉴权接口。
+使用 `scripts/waimao.py`，先执行 `capabilities`。调用当前 OpenAPI 中受保护的网易外贸通 v2 普通 Agent API；操作面不可用时返回 `upstream_unavailable`。
 
 OmniX 服务端负责把当前 principal 绑定到 public refs。Skill 不传 owner，不接触共享网易账号的业务 Key/Admin Key，也不解释成每个用户拥有独立网易账号。
 
@@ -24,7 +24,7 @@ python scripts/waimao.py request GET '/api/NeteaseWaimao/v2/search/jobs/public-j
 python scripts/waimao.py request GET '/api/NeteaseWaimao/v2/search/jobs/public-job-ref/results?pageNumber=1&pageSize=20'
 ~~~
 
-示例路径仅用于说明调用形态；实际大小写、path、参数与 DTO 必须来自本次 capabilities 返回的 OpenAPI。脚本拒绝 v1、admin、login、SMS、usage、raw/RPA 路径，也拒绝非 public 的 job/result path 参数。
+示例路径仅用于说明调用形态；实际大小写、path、参数与 DTO 必须来自本次 capabilities 返回的 OpenAPI。脚本的能力面限定为受保护的 v2 普通 Agent API 和 public job/result refs。
 
 POST 必须有可重算的 `Idempotency-Key`。脚本按 OpenAPI 校验 query、path public ref 和 JSON body，并拒绝 owner、tenant、内部 job/result/RPA ID。取消任务只在用户明确要求时使用 DELETE + `--confirm-cancel`。没有长阻塞 `wait`：一次调用只提交、查询一次状态或拉一页结果。
 
@@ -88,7 +88,7 @@ public refs 仅用于后续查询和审计，不进入本地 company.json，也�
 
 ## 禁止项
 
-- 不调用 login、SMS、admin、usage、raw RPA 或 v1 接口。
+- 服务端登录、短信、管理、用量和共享 RPA 运维不属于本 Skill 的能力面。
 - 不显示、写入或传递共享 RPA 内部 job/result ID。
 - 不自行轮询到完成，不无限翻页。
 - 不把 Provider 结果直接发布、评分或自动建立关系。
