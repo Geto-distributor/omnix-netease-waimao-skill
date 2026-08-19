@@ -1,6 +1,6 @@
 ---
 name: netease-waimao
-description: 使用本地 OMNIX_API_KEY 调用 OmniX 受保护的网易外贸通 v2 REST API，按 OpenAPI 提交企业搜索或获客异步任务，并以 public job/result refs 查询状态、分页结果、公司联系人和海关补充。用于 GETO 线索发现与单公司证据增强；只返回 ExternalObservation，不接触共享 RPA 的内部 ID、登录、短信或管理接口。
+description: 使用本地 OMNIX_API_KEY 调用 OmniX 受保护的网易外贸通 v2 REST API，在独立用户可见任务中提交企业搜索或获客任务，并以 public job/result refs 查询状态、分页结果、公司联系人和海关补充。用于 GETO 线索发现与单公司证据增强；只返回 ExternalObservation、成果路径和统一任务回传，不接触共享 RPA 的内部 ID、登录、短信或管理接口。
 ---
 
 # 网易外贸通 Provider REST
@@ -11,7 +11,7 @@ description: 使用本地 OMNIX_API_KEY 调用 OmniX 受保护的网易外贸通
 - `OMNIX_API_KEY`：当前用户的 `omx_test_*` 或 `omx_live_*` Key。
 - 可选 `OMNIX_OPENAPI_URL`：默认 `${OMNIX_API_BASE_URL}/swagger/v1/swagger.json`。
 
-使用 `scripts/waimao.py`，先执行 `capabilities`。只调用当前 OpenAPI 中受保护的网易外贸通 v2 普通 Agent API；v2 未发布时状态为 `upstream_unavailable`，不得回退到 v1、共享内部 ID 或无鉴权接口。
+使用 `scripts/waimao.py`，先执行 `capabilities`。调用当前 OpenAPI 中受保护的网易外贸通 v2 普通 Agent API；操作面不可用时返回 `upstream_unavailable`。
 
 OmniX 服务端负责把当前 principal 绑定到 public refs。Skill 不传 owner，不接触共享网易账号的业务 Key/Admin Key，也不解释成每个用户拥有独立网易账号。
 
@@ -24,7 +24,7 @@ python scripts/waimao.py request GET '/api/NeteaseWaimao/v2/search/jobs/public-j
 python scripts/waimao.py request GET '/api/NeteaseWaimao/v2/search/jobs/public-job-ref/results?pageNumber=1&pageSize=20'
 ~~~
 
-示例路径仅用于说明调用形态；实际大小写、path、参数与 DTO 必须来自本次 capabilities 返回的 OpenAPI。脚本拒绝 v1、admin、login、SMS、usage、raw/RPA 路径，也拒绝非 public 的 job/result path 参数。
+示例路径仅用于说明调用形态；实际大小写、path、参数与 DTO 必须来自本次 capabilities 返回的 OpenAPI。脚本的能力面限定为受保护的 v2 普通 Agent API 和 public job/result refs。
 
 POST 必须有可重算的 `Idempotency-Key`。脚本按 OpenAPI 校验 query、path public ref 和 JSON body，并拒绝 owner、tenant、内部 job/result/RPA ID。取消任务只在用户明确要求时使用 DELETE + `--confirm-cancel`。没有长阻塞 `wait`：一次调用只提交、查询一次状态或拉一页结果。
 
@@ -43,6 +43,8 @@ POST 必须有可重算的 `Idempotency-Key`。脚本按 OpenAPI 校验 query、
 - `partial`
 
 这些状态不等于 `not_found`。
+
+`diagnosticCodes=server_configuration_missing` 表示 SEARCH_RESULTS_JSON_PATH 等服务端运行配置缺失，状态使用 `failed`。只有 completed 且当前 queryBoundary 的结果数组为空，才记录 no_result。
 
 ### 2. 提交任务
 
@@ -72,20 +74,26 @@ POST 必须有可重算的 `Idempotency-Key`。脚本按 OpenAPI 校验 query、
 }
 ~~~
 
-public refs 仅用于后续查询和审计，不是 Company/Project/Source 自然键。
+public refs 仅用于后续查询和审计，不进入本地 company.json，也不是 Company/Project 的自然身份。
 
 ## GETO 交接
 
 - `$geto-find-leads` 使用外贸通扩大候选企业召回。
 - `$geto-diligence-company` 使用公司、联系人和海关结果补强特定主体。
-- 上层必须做主体去重、官网/公开来源交叉验证、Claim/Source 仲裁后才形成 ResearchDelta。
+- 本 Skill 在 GETO 国家调研中必须使用独立用户可见任务，不与 Web 或 TradeWind trace 混合。
+- 上层必须做主体去重、官网/公开来源交叉验证，并把采纳事实写入 company.json 对应 item 的 evidence[]。
 - 联系人、CustomsEvidence 与 Company 保持独立子资源；查询边界和“汇总有值但明细无值”状态必须保留。
+- 精确名称+国家仍逐条核对法定名、RFC/注册号、官网域名和返回记录国家；法律后缀或名称相似不构成主体命中。
+- 邮箱存在或可投递的 Evidence 只支持 workEmail.deliverability，不支持任职、职位、授权或 buyingRole。
+
+任务结束时统一回传：做了什么、找到了什么、ExternalObservation 成果路径、接受/拒绝理由、缺口和下一步。不得直接授予 lead/competitor、评分或上传 OmniX Company Aggregate。
 
 详细异步、分页与错误行为见 [workflows.md](references/workflows.md)，数据解释见 [company-and-customs.md](references/company-and-customs.md)。
+主体候选和联系人证据采纳见 [observation-acceptance.md](references/observation-acceptance.md)。
 
 ## 禁止项
 
-- 不调用 login、SMS、admin、usage、raw RPA 或 v1 接口。
+- 服务端登录、短信、管理、用量和共享 RPA 运维不属于本 Skill 的能力面。
 - 不显示、写入或传递共享 RPA 内部 job/result ID。
 - 不自行轮询到完成，不无限翻页。
 - 不把 Provider 结果直接发布、评分或自动建立关系。

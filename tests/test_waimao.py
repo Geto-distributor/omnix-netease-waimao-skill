@@ -140,6 +140,11 @@ class AsyncStatusTests(unittest.TestCase):
             with self.subTest(raw=raw):
                 self.assertEqual(CLIENT.normalized_job_status({"task_status": raw}), expected)
 
+    def test_server_configuration_failure_is_not_available_or_not_found(self) -> None:
+        payload = {"status": "failed", "message": "SEARCH_RESULTS_JSON_PATH is not configured"}
+        self.assertEqual(CLIENT.diagnostic_codes(payload), ["server_configuration_missing"])
+        self.assertEqual(CLIENT.semantic_provider_status(payload, "failed", 500), "failed")
+
 
 class RequestTests(unittest.TestCase):
     def run_request(self, request_args, response: FakeResponse | None = None):
@@ -174,6 +179,17 @@ class RequestTests(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertEqual(output["jobStatus"], "provider_session_expired")
         self.assertEqual(output["providerStatus"], "provider_session_expired")
+
+    def test_failed_job_has_failed_provider_status_and_diagnostic(self) -> None:
+        path = "/api/NeteaseWaimao/v2/search/jobs/pub_job_A1"
+        result, _, output = self.run_request(
+            args("GET", path),
+            FakeResponse(b'{"status":"failed","message":"SEARCH_RESULTS_JSON_PATH missing"}'),
+        )
+        self.assertEqual(result, 0)
+        self.assertEqual(output["jobStatus"], "failed")
+        self.assertEqual(output["providerStatus"], "failed")
+        self.assertEqual(output["diagnosticCodes"], ["server_configuration_missing"])
 
     def test_response_size_is_bounded(self) -> None:
         path = "/api/NeteaseWaimao/v2/search/jobs/pub_job_A1"

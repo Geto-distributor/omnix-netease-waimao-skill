@@ -13,7 +13,7 @@ OpenAPI 是 endpoint、method、query、request/response schema 和 operation av
 
 某能力未出现在当前 OpenAPI 时标记不可用，不自行推断 endpoint。
 
-当前 v2 设计应在 OpenAPI 中暴露以下路由族；仍以运行时 OpenAPI 为准：
+运行时 OpenAPI 提供以下 v2 路由族：
 
 - `GET acquisition/modules`
 - `POST search/jobs`、`POST acquisition/jobs` 及 customs/scene/intelligent/recommendation/exhibition/maps/social 模块任务

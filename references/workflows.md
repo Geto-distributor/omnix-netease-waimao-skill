@@ -10,6 +10,8 @@
 
 脚本将已知业务状态归一为 `queued|running|completed|failed|cancelled|provider_session_expired`；HTTP providerStatus 与 jobStatus 分开，不能把 202/queued 当 completed。
 
+响应包含 SEARCH_RESULTS_JSON_PATH 等服务端配置缺失诊断时，脚本输出 `providerStatus=failed` 与 `diagnosticCodes=["server_configuration_missing"]`。该状态需要服务端配置恢复，不属于零结果。
+
 只在用户明确要求取消某个已解析 public_job_ref 时调用 DELETE；取消后报告任务状态，不清理其他结果。
 
 分页必须保存 pageNumber、pageSize、total 和 query boundary。默认先取一页验证数据；全量研究按上层任务范围继续，不把单页结果称为全量。

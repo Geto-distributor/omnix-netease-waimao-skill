@@ -1,4 +1,4 @@
 interface:
   display_name: "网易外贸通 REST Provider"
-  short_description: "通过 OmniX v2 Agent API 搜索企业并补充联系人和海关观察。"
-  default_prompt: "使用 $netease-waimao 查询网易外贸通，并将 public-ref 结果作为 ExternalObservation 返回。"
+  short_description: "在独立任务中通过受保护 v2 API 查询企业、联系人和海关。"
+  default_prompt: "使用 $netease-waimao 在独立任务中查询，并回传 ExternalObservation 成果路径。"

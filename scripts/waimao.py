@@ -46,6 +46,9 @@ SENSITIVE_TEXT_PATTERNS = (
         r"(?i)\b(?:upstream_|internal_)?(?:job|result|search_result)_id\b\s*[:=]\s*[^\s,;]+"
     ),
 )
+SERVER_CONFIGURATION_MARKERS = {
+    "SEARCH_RESULTS_JSON_PATH": "server_configuration_missing",
+}
 
 
 class ClientError(ValueError):
@@ -412,6 +415,22 @@ def normalized_job_status(value: Any) -> str | None:
     return None
 
 
+def diagnostic_codes(value: Any) -> list[str]:
+    text = json.dumps(value, ensure_ascii=False) if not isinstance(value, str) else value
+    upper = text.upper()
+    return sorted({code for marker, code in SERVER_CONFIGURATION_MARKERS.items() if marker in upper})
+
+
+def semantic_provider_status(value: Any, job_status: str | None, http_status: int) -> str:
+    if diagnostic_codes(value):
+        return "failed"
+    if job_status == "provider_session_expired":
+        return "provider_session_expired"
+    if job_status == "failed":
+        return "failed"
+    return http_provider_status(http_status) if http_status >= 400 else "available"
+
+
 def parse_body(raw: str) -> Any:
     if not raw:
         return None
@@ -493,7 +512,16 @@ def request(args: argparse.Namespace) -> int:
     except urllib.error.HTTPError as error:
         raw = read_limited(error, args.max_response_bytes)
         safe_data, warnings = sanitize_response(parse_body(raw))
-        print(json.dumps({"provider": "netease-waimao", "providerStatus": http_provider_status(error.code), "httpStatus": error.code, "data": safe_data, "warnings": warnings}, ensure_ascii=False, indent=2))
+        job_status = normalized_job_status(safe_data)
+        print(json.dumps({
+            "provider": "netease-waimao",
+            "providerStatus": semantic_provider_status(safe_data, job_status, error.code),
+            "httpStatus": error.code,
+            "jobStatus": job_status,
+            "diagnosticCodes": diagnostic_codes(safe_data),
+            "data": safe_data,
+            "warnings": warnings,
+        }, ensure_ascii=False, indent=2))
         return 1
     with response:
         raw = read_limited(response, args.max_response_bytes)
@@ -501,13 +529,11 @@ def request(args: argparse.Namespace) -> int:
         job_status = normalized_job_status(safe_data)
         result = {
             "provider": "netease-waimao",
-            "providerStatus": (
-                "provider_session_expired"
-                if job_status == "provider_session_expired" else "available"
-            ),
+            "providerStatus": semantic_provider_status(safe_data, job_status, response.status),
             "httpStatus": response.status,
             "retryAfter": response.headers.get("Retry-After"),
             "jobStatus": job_status,
+            "diagnosticCodes": diagnostic_codes(safe_data),
             "data": safe_data,
             "warnings": warnings,
         }

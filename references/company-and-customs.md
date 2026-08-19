@@ -2,11 +2,11 @@
 
 ## 公司
 
-Provider 公司名称、网站、域名、地址、描述和 record ref 均为候选观察。先用官网域名、法定名、国家与别名解析 Company；组合实体、分支、品牌和法定实体不得自动合并。
+Provider 公司名称、网站、域名、地址、描述和 record ref 均为候选观察。先用官网域名、法定名、RFC/注册号、返回记录国家与别名解析 Company；组合实体、分支、品牌和法定实体不得自动合并。请求 country 不等于记录已证明该国家，通用法律后缀不构成名称锚点。
 
 ## 联系人
 
-保存姓名、职位、层级、邮箱、电话、公司域名、地点、provider record ref 与 retrievedOn。邮箱/电话存在不证明其当前任职；需要公开来源或多源一致性做 Claim 仲裁。
+保存姓名、职位、层级、邮箱、电话、公司域名、地点、provider record ref 与 retrievedOn。邮箱/电话存在不证明其当前任职；邮箱验证 Evidence 的 verificationScope 只写 `workEmail.deliverability`。任职、职位、授权和 buyingRole 需要公开来源或多源一致性仲裁。
 
 ## 海关
 
