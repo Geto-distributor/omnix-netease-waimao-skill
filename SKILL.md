@@ -1,6 +1,6 @@
 ---
 name: netease-waimao
-description: 使用本地 OMNIX_API_KEY 调用 OmniX 受保护的网易外贸通 v2 REST API，按 OpenAPI 提交企业搜索或获客异步任务，并以 public job/result refs 查询状态、分页结果、公司联系人和海关补充。用于 GETO 线索发现与单公司证据增强；只返回 ExternalObservation，不接触共享 RPA 的内部 ID、登录、短信或管理接口。
+description: 使用本地 OMNIX_API_KEY 调用 OmniX 受保护的网易外贸通 v2 REST API，在独立用户可见任务中提交企业搜索或获客任务，并以 public job/result refs 查询状态、分页结果、公司联系人和海关补充。用于 GETO 线索发现与单公司证据增强；只返回 ExternalObservation、成果路径和统一任务回传，不接触共享 RPA 的内部 ID、登录、短信或管理接口。
 ---
 
 # 网易外贸通 Provider REST
@@ -72,14 +72,17 @@ POST 必须有可重算的 `Idempotency-Key`。脚本按 OpenAPI 校验 query、
 }
 ~~~
 
-public refs 仅用于后续查询和审计，不是 Company/Project/Source 自然键。
+public refs 仅用于后续查询和审计，不进入本地 company.json，也不是 Company/Project 的自然身份。
 
 ## GETO 交接
 
 - `$geto-find-leads` 使用外贸通扩大候选企业召回。
 - `$geto-diligence-company` 使用公司、联系人和海关结果补强特定主体。
-- 上层必须做主体去重、官网/公开来源交叉验证、Claim/Source 仲裁后才形成 ResearchDelta。
+- 本 Skill 在 GETO 国家调研中必须使用独立用户可见任务，不与 Web 或 TradeWind trace 混合。
+- 上层必须做主体去重、官网/公开来源交叉验证，并把采纳事实写入 company.json 对应 item 的 evidence[]。
 - 联系人、CustomsEvidence 与 Company 保持独立子资源；查询边界和“汇总有值但明细无值”状态必须保留。
+
+任务结束时统一回传：做了什么、找到了什么、ExternalObservation 成果路径、接受/拒绝理由、缺口和下一步。不得直接授予 lead/competitor、评分或上传 OmniX Company Aggregate。
 
 详细异步、分页与错误行为见 [workflows.md](references/workflows.md)，数据解释见 [company-and-customs.md](references/company-and-customs.md)。
 

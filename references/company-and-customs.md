@@ -6,7 +6,7 @@ Provider 公司名称、网站、域名、地址、描述和 record ref 均为�
 
 ## 联系人
 
-保存姓名、职位、层级、邮箱、电话、公司域名、地点、provider record ref 与 retrievedOn。邮箱/电话存在不证明其当前任职；需要公开来源或多源一致性做 Claim 仲裁。
+保存姓名、职位、层级、邮箱、电话、公司域名、地点、provider record ref 与 retrievedOn。邮箱/电话存在不证明其当前任职；需要公开来源或多源一致性仲裁后才能写入 company.json contacts[] 的内嵌 Evidence。
 
 ## 海关
 
