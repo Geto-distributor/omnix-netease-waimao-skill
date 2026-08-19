@@ -44,6 +44,8 @@ POST 必须有可重算的 `Idempotency-Key`。脚本按 OpenAPI 校验 query、
 
 这些状态不等于 `not_found`。
 
+`diagnosticCodes=server_configuration_missing` 表示 SEARCH_RESULTS_JSON_PATH 等服务端运行配置缺失，状态使用 `failed`。只有 completed 且当前 queryBoundary 的结果数组为空，才记录 no_result。
+
 ### 2. 提交任务
 
 从 OpenAPI 选择全局搜索或 customs、scene、intelligent、recommendation、exhibition、maps、social 等已发布模块。使用小范围、可解释的 query boundary，保存幂等键和服务端返回的 `public_job_ref`。
@@ -81,10 +83,13 @@ public refs 仅用于后续查询和审计，不进入本地 company.json，也�
 - 本 Skill 在 GETO 国家调研中必须使用独立用户可见任务，不与 Web 或 TradeWind trace 混合。
 - 上层必须做主体去重、官网/公开来源交叉验证，并把采纳事实写入 company.json 对应 item 的 evidence[]。
 - 联系人、CustomsEvidence 与 Company 保持独立子资源；查询边界和“汇总有值但明细无值”状态必须保留。
+- 精确名称+国家仍逐条核对法定名、RFC/注册号、官网域名和返回记录国家；法律后缀或名称相似不构成主体命中。
+- 邮箱存在或可投递的 Evidence 只支持 workEmail.deliverability，不支持任职、职位、授权或 buyingRole。
 
 任务结束时统一回传：做了什么、找到了什么、ExternalObservation 成果路径、接受/拒绝理由、缺口和下一步。不得直接授予 lead/competitor、评分或上传 OmniX Company Aggregate。
 
 详细异步、分页与错误行为见 [workflows.md](references/workflows.md)，数据解释见 [company-and-customs.md](references/company-and-customs.md)。
+主体候选和联系人证据采纳见 [observation-acceptance.md](references/observation-acceptance.md)。
 
 ## 禁止项
 
